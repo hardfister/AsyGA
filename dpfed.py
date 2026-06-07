@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(
 # Basic hyperparameters
 parser.add_argument("--batch_size", type=int, default=128, help="Optimal batch size for 8GB VRAM")
 parser.add_argument("--epoch_num", type=int, default=3, help="Local epochs, recommended 1~5")
-parser.add_argument("--com", type=int, default=13, help="Total communication rounds")
+parser.add_argument("--com", type=int, default=50, help="Total communication rounds")
 parser.add_argument("--lr", type=float, default=0.001)
 parser.add_argument("--redstep", type=int, default=30)
 parser.add_argument("--seed", type=int, default=42)

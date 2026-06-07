@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument("--batch_size", type=int, default=128, help="Optimal batch size for 8GB VRAM")
 parser.add_argument("--epoch_num", type=int, default=3, help="Local epochs")
-parser.add_argument("--com", type=int, default=15, help="Total communication rounds")
+parser.add_argument("--com", type=int, default=50, help="Total communication rounds")
 parser.add_argument("--temp", type=float, default=0.07)
 parser.add_argument("--weight1", type=float, default=0.7)
 parser.add_argument("--weight2", type=float, default=0.15)

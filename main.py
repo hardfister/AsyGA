@@ -29,8 +29,8 @@ def load_and_finetune():
 
     # --- 1. Parameter settings ---
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    pretrained_path = r'E:\document\1\PSFed-Palm-main1\weightps\checkpoint\net_params_best.pth'
-    save_path = r'E:\document\1\PSFed-Palm-main1\md\checkpoint\bipps0finetuned_best.pth'
+    pretrained_path = r'weightps\checkpoint\net_params_best.pth'
+    save_path = r'save\AsyGA.pth'
 
 
     real_id_num = 100
@@ -42,7 +42,7 @@ def load_and_finetune():
     patience = 20
 
     con_weight = 0.5
-    reg_weight = 45.0
+    reg_weight = 50.0
 
     # --- 2. Initialize student model ---
     model = ccnet(num_classes=real_id_num).to(device)
@@ -70,15 +70,15 @@ def load_and_finetune():
         teacher_model = None
 
     # --- 4. Prepare data ---
-    train_txt = './ca/test.txt'
+    train_txt = './generate/test.txt'
     train_dataset = MyDataset(txt=train_txt, train=True, imside=128)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True)
 
     val_txts = {
-        'Blue': './dataca/train_BLUE.txt',
-        'Green': './dataca/train_GREEN.txt',
-        'Red': './dataca/train_RED.txt',
-        'NIR': './dataca/train_NIR.txt'
+        'Blue': './datacasia/train_BLUE.txt',
+        'Green': './datacasia/train_GREEN.txt',
+        'Red': './datacasia/train_RED.txt',
+        'NIR': './datacasia/train_NIR.txt'
     }
 
     val_loaders = {}

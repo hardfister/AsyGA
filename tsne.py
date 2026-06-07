@@ -17,22 +17,21 @@ from models import MyDataset
 
 # ================= 1. Core Configuration =================
 # Output data save directory
-SAVE_DIR = r'E:\document\1\PSFed-Palm-main1\md\bip\pics'
+SAVE_DIR = r'save\pics'
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # Core customization: enter the absolute paths of the model weights to compare below
 MODEL_PATHS = {
-    'Baseline':       r'E:\document\1\PSFed-Palm-main1\weightps\checkpoint\net_params_best.pth',
-    'Traditional FT': r'E:\document\1\PSFed-Palm-main1\md\checkpoint\bipps1finetuned_best.pth',  # Replace with the actual weight path for AsyGA
-    'AsyGA': r'E:\document\1\PSFed-Palm-main1\md\checkpoint\bippsfinetuned_best.pth'
+    'Baseline':       r'\weightps\checkpoint\net_params_best.pth',
+    'AsyGA': r'save\AsyGA.pth',  # Replace with the actual weight path for AsyGA
 }
 
 # Dataset txt paths for the 4 bands (ensure these are test set data)
 BAND_TXT_FILES = {
-    'NIR':   './datapom/trainf_NIR.txt',
-    'Red':   './datapom/trainf_RED.txt',
-    'Green': './datapom/trainf_GREEN.txt',
-    'Blue':  './datapom/trainf_BLUE.txt'
+    'NIR':   './datapolyu/train_NIR.txt',
+    'Red':   './datapolyu/train_RED.txt',
+    'Green': './datapolyu/train_GREEN.txt',
+    'Blue':  './datapolyu/train_BLUE.txt'
 }
 
 # Global academic paper plotting style

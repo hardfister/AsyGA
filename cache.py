@@ -8,30 +8,30 @@ from sklearn.metrics import roc_curve
 from scipy.optimize import brentq
 from scipy.interpolate import interp1d
 
-# ================= 导入你的模型和数据集 =================
+# ================= Import Your Models and Datasets =================
 from models.ccnet1 import ccnet
 from models import MyDataset
 
-# ================= 1. 核心配置区 =================
-# 输出数据的保存目录
+# ================= 1. Core Configuration Zone =================
+# Output directory for saving evaluation results
 SAVE_DIR = r'save\dp'
-#SAVE_DIR = r'save\AsyGA'
+# SAVE_DIR = r'save\AsyGA'
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-# 只测试这一个模型 (如需测试Base，请更换路径和名称)
+# Model configuration (Switch paths/names to evaluate different methods)
 MODEL_PATHS = {
     'Base': r'weightdp\checkpoint\net_params_best.pth'
-    #,'ours': r'save\checkpoint\AsyGA\AsyGA.pth'
+    # ,'ours': r'save\checkpoint\AsyGA\AsyGA.pth'
 }
 
-# 4个波段对应的数据集 txt 路径 (请确保这些txt是测试集数据)
+# Paths to the text files containing test split data for the 4 spectral bands
 BAND_TXT_FILES = {
     'NIR':   './datapolyu/train_NIR.txt',
     'Red':   './datapolyu/train_RED.txt',
     'Green': './datapolyu/train_GREEN.txt',
     'Blue':  './datapolyu/train_BLUE.txt'
 }
-# =====================================================
+# ===================================================================
 
 def calculate_eer(y_true, y_score):
     fpr, tpr, thresholds = roc_curve(y_true, y_score, pos_label=1)
@@ -50,9 +50,9 @@ def extract_features(model, txt_path, device):
     all_features, all_labels = [], []
     for datas, target in loader:
         img = datas[0].to(device) if isinstance(datas, list) else datas.to(device)
-        # 调用模型的特征提取方法
+        # Invoke the model's feature extraction function
         feature = model.getFeatureCode(img)
-        # L2 归一化
+        # L2 Normalization
         feature = torch.nn.functional.normalize(feature, p=2, dim=1) 
         all_features.append(feature.cpu().numpy())
         all_labels.append(target.numpy())
@@ -60,19 +60,19 @@ def extract_features(model, txt_path, device):
 
 
 def evaluate_model(model_name, model_path, device):
-    print(f"\n[{model_name}] 开始加载并提取特征...")
+    print(f"\n[{model_name}] Initializing model loading and feature extraction...")
     model = ccnet(num_classes=500).to(device)
     
-    # 1. 加载权重字典
+    # 1. Load weights state dictionary
     state_dict = torch.load(model_path, map_location=device, weights_only=True)
     
-    # 2. 替换字典中不匹配的键名
+    # 2. Replace mismatched key names for compatibility
     new_state_dict = {}
     for k, v in state_dict.items():
-        new_k = k.replace('se_mlp', 'fc') # 解决名字不匹配的问题
+        new_k = k.replace('se_mlp', 'fc') # Resolves key naming discrepancy
         new_state_dict[new_k] = v
         
-    # 3. 加入 shape 检查，丢弃分类数不一致的最后一层权重
+    # 3. Shape validation: Discard the final layer weights if the class counts mismatch
     model_dict = model.state_dict()
     filtered_dict = {
         k: v for k, v in new_state_dict.items() 
@@ -84,7 +84,7 @@ def evaluate_model(model_name, model_path, device):
     bands = list(BAND_TXT_FILES.keys())
     features_dict, labels_dict = {}, {}
     
-    # 提取各波段特征
+    # Extract features for each individual spectral band
     for band, path in BAND_TXT_FILES.items():
         feat, lbl = extract_features(model, path, device)
         features_dict[band] = feat
@@ -94,7 +94,7 @@ def evaluate_model(model_name, model_path, device):
     eer_matrix = np.zeros((num_bands, num_bands))
     all_y_true, all_y_score = [], []
 
-    print(f"[{model_name}] 计算跨光谱匹配矩阵...")
+    print(f"[{model_name}] Computing cross-spectral matching matrix...")
     for i, band1 in enumerate(bands):
         for j, band2 in enumerate(bands):
             f1, l1 = features_dict[band1], labels_dict[band1]
@@ -130,32 +130,32 @@ def evaluate_model(model_name, model_path, device):
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # 缓存文件路径
+    # Cache file destination path
     CACHE_FILE = os.path.join(SAVE_DIR, 'extracted_features_cache.pkl')
     
-    # 如果更新了权重文件想强制重新运行，请改为 True
+    # Set to True if you updated checkpoints and want to force recalculation
     FORCE_RECALCULATE = False 
 
     # =========================================================
-    # 阶段 1：数据获取与终端打印
+    # Phase 1: Data Retrieval and Console Reporting
     # =========================================================
     if os.path.exists(CACHE_FILE) and not FORCE_RECALCULATE:
-        print(f"============== 发现缓存文件，直接跳过模型推理！ ==============")
-        print(f"正在加载缓存: {CACHE_FILE}")
+        print(f"============== Cache Found. Skipping Model Inference! ==============")
+        print(f"Loading cached metrics from: {CACHE_FILE}")
         with open(CACHE_FILE, 'rb') as f:
             results = pickle.load(f)
         
-        # 从缓存中提取并打印 EER
+        # Load and print EER matrix directly from cache
         for name, data in results.items():
-            print(f"\n=================== [{name}] EER 矩阵结果 (来自缓存) ===================")
+            print(f"\n=================== [{name}] EER Matrix Results (From Cache) ===================")
             print(data['df'])
-            print("=================================================================\n")
+            print("================================================================================\n")
     else:
-        print(f"============== 开始模型推理与特征提取 | 采用设备: {device} ==============")
+        print(f"============== Executing Model Inference | Device: {device} ==============")
         results = {}
         for name, path in MODEL_PATHS.items():
             if not os.path.exists(path):
-                raise FileNotFoundError(f"找不到模型文件: {path}")
+                raise FileNotFoundError(f"Target model checkpoint path not found: {path}")
                 
             df, y_true, y_score, feat_dict, lbl_dict = evaluate_model(name, path, device)
             results[name] = {
@@ -163,22 +163,22 @@ def main():
                 'feat_dict': feat_dict, 'lbl_dict': lbl_dict
             }
             
-            # 1. 核心要求：将 EER 矩阵直接打印在终端
-            print(f"\n=================== [{name}] EER 矩阵结果 ===================")
+            # Core Requirement 1: Display EER matrix in terminal
+            print(f"\n=================== [{name}] EER Matrix Results ===================")
             print(df)
-            print("=========================================================\n")
+            print("===================================================================\n")
             
-            # 2. 核心要求：保存该模型的 eer csv 文件
+            # Core Requirement 2: Export model EER matrix to CSV
             csv_name = 'EER_Matrix_' + name.replace(" ", "_") + '.csv'
             df.to_csv(os.path.join(SAVE_DIR, csv_name))
 
-        # 3. 核心要求：保存该模型的 pkl 缓存文件
-        print(f"[保存缓存] 正在将数据保存到 {CACHE_FILE} ...")
+        # Core Requirement 3: Serialize and save evaluation results to .pkl cache
+        print(f"[Caching] Exporting data to {CACHE_FILE} ...")
         with open(CACHE_FILE, 'wb') as f:
             pickle.dump(results, f)
-        print("缓存保存成功！")
+        print("Cache exported successfully!")
 
-    print(f"全部完成！数据文件已保存在：{SAVE_DIR}")
+    print(f"Execution complete! All generated files are located in: {SAVE_DIR}")
 
 if __name__ == "__main__":
     main()
